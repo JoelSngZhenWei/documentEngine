@@ -12,13 +12,15 @@ def read_document():
 
 @router.post("/extract")
 def extract_information(req: ExtractRequest):
-    pdf_text = read_pdf_markdown()
+    pdf_text = read_pdf_markdown(req.pdf_path)
     AnswerModel = dynamic_answer_model(req.field_descriptions)
+
     try:
         llm = get_llm()
     except LLMNotConfigured as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
+
     structured_llm = llm.with_structured_output(schema=AnswerModel)
     prompt = EXTRACTION_PROMPT.invoke({"text": pdf_text})
     response = structured_llm.invoke(prompt)

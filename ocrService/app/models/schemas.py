@@ -2,6 +2,7 @@ from typing import Dict, Optional
 from pydantic import BaseModel, Field, create_model
 
 class ExtractRequest(BaseModel):
+    pdf_path: str
     field_descriptions: Dict[str, str]
 
 def dynamic_answer_model(descriptions: Dict[str, str]):
