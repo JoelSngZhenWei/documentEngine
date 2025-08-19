@@ -4,20 +4,27 @@ import { useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff } from "lucide-react"
+import { CheckCircle, Eye, EyeOff, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
+import { login } from "@/lib/user-api"
+import { useRouter } from "next/navigation"
+import { useAuth } from "./auth-provider"
+import { toast } from "sonner"
 
 const formSchema = z.object({
     username: z.string().min(2, { message: "Username must be at least 2 characters." }),
     password: z.string().min(6, { message: "Password must be at least 6 characters." }).regex(/[0-9]/, { message: "Password must contain at least one number." }),
 })
 
+
 export default function FormLogIn() {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
     const [show, setShow] = useState(false) // <-- move hook to top-level (no hooks inside render callbacks)
+    const router = useRouter()
+    const { setUser } = useAuth()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -27,20 +34,21 @@ export default function FormLogIn() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             setStatus("loading")
-            const payload = JSON.stringify(values)
-            const res = await fetch(
-                (process.env.NEXT_PUBLIC_BACKEND_URL ?? "") + (process.env.NEXT_PUBLIC_BACKEND_LOGIN ?? ""),
-                { method: "POST", headers: { "Content-Type": "application/json" }, body: payload }
-            )
-            if (!res.ok) throw new Error("Request failed")
-
-            const data = await res.json()
-            console.log("Login response:", data)
-
+            const data = await login(values)
+            setUser(data)
             setStatus("success")
+            toast("Log in successful. Redirecting...", {
+                icon: <CheckCircle className="h-5 w-5 text-success" />
+            })
+            setTimeout(() => {
+                router.replace("/")
+            }, 2000)
         } catch (err) {
-            console.error("Error during login:", err)
+            console.error("Error during login: ", err)
             setStatus("error")
+            toast("Log in failed. " + err, {
+                icon: <XCircle className="h-5 w-5 text-danger" />
+            })
         }
     }
 
@@ -80,7 +88,14 @@ export default function FormLogIn() {
                     />
 
                     <div className="flex justify-center">
-                        <Button type="submit" variant="outline" className="border-input">Log In</Button>
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            className="border-input"
+                            disabled={status === "loading"}
+                        >
+                            Log In
+                        </Button>
                     </div>
 
                     <p className="text-sm">
@@ -89,10 +104,6 @@ export default function FormLogIn() {
                             Sign up
                         </Link>
                     </p>
-
-                    {status === "loading" && <p>Submitting...</p>}
-                    {status === "success" && <p className="text-green-600">Log in successful!</p>}
-                    {status === "error" && <p className="text-red-600">Log in failed.</p>}
                 </form>
             </Form>
         </div>

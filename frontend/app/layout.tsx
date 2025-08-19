@@ -1,11 +1,13 @@
-import type {Metadata} from "next";
+import type { Metadata } from "next";
 import "./globals.css";
-import {SidebarProvider} from "@/components/ui/sidebar";
-import {AppSidebar} from "@/components/app-sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar"
 import React from "react";
-import {cookies} from "next/headers";
-import {ThemeProvider} from "@/components/theme-provider";
+import { cookies } from "next/headers";
+import { ThemeProvider } from "@/components/theme-provider";
 import AppMenuBar from "@/components/menubar";
+import { AuthProvider } from "@/components/auth-provider";
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
     title: "DocEngine",
@@ -13,8 +15,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({
-                                             children,
-                                         }: Readonly<{
+    children,
+}: Readonly<{
     children: React.ReactNode;
 }>) {
     const cookieStore = await cookies()
@@ -22,27 +24,30 @@ export default async function RootLayout({
 
     return (
         <html lang={"en"} suppressHydrationWarning>
-        <body>
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-        >
-            {/*<ThemeDebug />*/}
-            <SidebarProvider defaultOpen={defaultOpen}>
-                <div className="flex min-h-screen w-full">
-                    <AppSidebar/>
-                    <main className={"flex-1"}>
-                        <AppMenuBar/>
-                        <div className="flex-1">
-                            {children}
-                        </div>
-                    </main>
-                </div>
-            </SidebarProvider>
-        </ThemeProvider>
-        </body>
+            <body>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <AuthProvider>
+                        {/*<ThemeDebug />*/}
+                        <SidebarProvider defaultOpen={defaultOpen}>
+                            <div className="flex min-h-screen w-full">
+                                <AppSidebar />
+                                <main className={"flex-1"}>
+                                    <AppMenuBar />
+                                    <div className="flex-1">
+                                        {children}
+                                    </div>
+                                </main>
+                            </div>
+                            <Toaster />
+                        </SidebarProvider>
+                    </AuthProvider>
+                </ThemeProvider>
+            </body>
         </html>
     );
 }

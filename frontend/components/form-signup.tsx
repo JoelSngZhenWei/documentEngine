@@ -4,11 +4,14 @@ import { useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff } from "lucide-react"
+import { CheckCircle, Eye, EyeOff, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
+import { signup } from "@/lib/user-api"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 const formSchema = z.object({
     username: z.string().min(2, { message: "Username must be at least 2 characters." }),
@@ -19,33 +22,30 @@ const formSchema = z.object({
 export default function FormSignUp() {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
     const [show, setShow] = useState(false) // <-- move hook to top-level (no hooks inside render callbacks)
-
+    const router = useRouter()
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: { username: "", email: "", password: "" },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-
         try {
             setStatus("loading")
-
-            // default new sign-ups to user role
-            // move this into backend logic
-            const payload = JSON.stringify({
-                ...values,
-                roles: ["user"],
-            })
-
-            console.log(payload)
-            const res = await fetch(
-                (process.env.NEXT_PUBLIC_BACKEND_URL ?? "") + (process.env.NEXT_PUBLIC_BACKEND_SIGNUP ?? ""),
-                { method: "POST", headers: { "Content-Type": "application/json" }, body: payload }
-            )
-            if (!res.ok) throw new Error("Request failed")
+            await signup(values)
             setStatus("success")
-        } catch {
+            toast("Sign up successful. Redirecting...", {
+                icon: <CheckCircle className="h-5 w-5 text-success" />
+            })
+            setTimeout(() => {
+                router.replace("/login")
+            }, 2000)
+
+        } catch (err) {
+            console.error("Error during sign up:", err)
             setStatus("error")
+            toast("Sign up failed. " + err, {
+                icon: <XCircle className="h-5 w-5 text-danger" />
+            })
         }
     }
 
@@ -106,10 +106,6 @@ export default function FormSignUp() {
                             Log in
                         </Link>
                     </p>
-
-                    {status === "loading" && <p>Submitting...</p>}
-                    {status === "success" && <p className="text-green-600">Sign up successful!</p>}
-                    {status === "error" && <p className="text-red-600">Sign up failed.</p>}
                 </form>
             </Form>
         </div>
