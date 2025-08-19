@@ -24,12 +24,12 @@ services:
       timeout: 3s
       retries: 5
 
-  frontend:
-    build: ./frontend
-    depends_on:
-      - "backend"
-    ports:
-      - "3000:3000"
+  # frontend:
+  #   build: ./frontend
+  #   depends_on:
+  #     - "backend"
+  #   ports:
+  #     - "3000:3000"
 
   backend:
     build: ./backend

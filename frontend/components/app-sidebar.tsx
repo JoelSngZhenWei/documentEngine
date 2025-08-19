@@ -57,7 +57,7 @@ export function AppSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                <SidebarSeparator />
+                <SidebarSeparator className="bg-muted-foreground" />
 
             </SidebarContent>
 

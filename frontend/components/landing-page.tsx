@@ -22,7 +22,7 @@ export default function LandingPage() {
     }
 
     return (
-        <div className="space-y-6 w-6xl">
+        <div className="space-y-6 w-6xl ">
             <div className="text-center">
                 <h1 className="text-4xl font-bold">Document Engine</h1>
                 {user ? (
