@@ -43,6 +43,11 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
+    --color-success: var(--success);
+    --color-danger:  var(--danger);
+    --color-purple-accent: var(--purple-accent);
+    --color-warning: var(--warning);
+  
 }
 
 :root {
@@ -52,7 +57,6 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     --primary: oklch(0.65 0.25 260);        /* vivid medium blue */
-    --primary-foreground: oklch(0.98 0.02 260); /* near-white, high contrast */
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
@@ -76,21 +80,22 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
-    --background: oklch(1 0 0);
+    --background: oklch(0.97 0 0);  /* very light gray */
     --foreground: oklch(0.145 0 0);
     --success: oklch(0.7 0.2 150);   /* green */
     --danger:  oklch(0.65 0.25 30);  /* red */
+    --purple-accent: oklch(0.65 0.25 310);        /* purple */
+    --warning: oklch(0.75 0.18 95);          /* yellow */
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    --background: oklch(0.182 0 90);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.65 0.25 260);        /* vivid medium blue */
-    --primary-foreground: oklch(0.98 0.02 260); /* near-white, high contrast */
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -116,8 +121,12 @@
     --sidebar-ring: oklch(0.556 0 0);
     --success: oklch(0.6 0.18 150);  /* darker green */
     --danger:  oklch(0.55 0.22 30);  /* darker red */
+    --purple-accent: oklch(0.55 0.2 310);        /* purple */
+    --warning: oklch(0.75 0.18 95);          /* yellow */
 }
 
 @layer base {
-
+    body {
+        @apply bg-[var(--background)] text-[var(--foreground)];
+      }
 }

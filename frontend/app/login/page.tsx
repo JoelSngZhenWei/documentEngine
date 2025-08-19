@@ -7,7 +7,10 @@ export default function LogInPage() {
                 <h1 className="text-2xl font-semibold tracking-tight text-center mb-6">
                     Log In
                 </h1>
-                <FormLogIn/>
+                <p className="text-sm text-muted-foreground text-center mb-6">
+                    We ask you to log in to keep the platform secure, prevent spam, and manage session tokens reliably.
+                </p>
+                <FormLogIn />
             </div>
         </div>
     )
