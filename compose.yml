@@ -31,6 +31,12 @@ services:
   #   ports:
   #     - "3000:3000"
 
+  ocr-service:
+    build: ./ocrService
+    ports:
+    - "8000:8000"
+    restart: unless-stopped
+
   backend:
     build: ./backend
     depends_on:

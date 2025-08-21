@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle, Copy, File, ScanText, Upload, Lock, Check } from "lucide-react"
 import KeyValueEditor from "@/components/key-value-input"
 import { PdfControls } from "@/components/pdf-controls"
-import { uploadDocument } from "@/lib/doc-api"
+import { ocrDocument } from "@/lib/doc-api"
 import { toast } from "sonner"
 import { useAuth } from "@/components/auth-provider"
 import AuthOverlay from "@/components/auth-overlay"
@@ -61,22 +61,27 @@ export default function InfoMiner() {
                 return acc
             }, {} as Record<string, string | string[]>)
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const [ocrResult, setOcrResult] = useState<string | null>(null)
+
+    const handleOCR = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!file) return toast("Please submit and scan a document.", {
-            icon: <File className="text-warning" />
-        })
+        if (!file) {
+            return toast("Please submit and scan a document.", {
+                icon: <File className="text-warning" />,
+            })
+        }
 
         try {
-            const result = await uploadDocument(file, pairsToObject(pairs), "PLACEHOLDER MARKDOWN TEXT",)
+            const result = await ocrDocument(file)
             console.log(result)
+            setOcrResult(result.content) // only store the text
             toast("File uploaded successfully.", {
-                icon: <CheckCircle className="text-success" />
+                icon: <CheckCircle className="text-success" />,
             })
         } catch (err) {
             console.log("Error uploading file: " + err)
-            toast("Error uploading file:" + err, {
-                icon: <Upload className="text-danger" />
+            toast("Error uploading file: " + err, {
+                icon: <Upload className="text-danger" />,
             })
         }
     }
@@ -160,7 +165,7 @@ export default function InfoMiner() {
                         className="h-[40rem] border rounded-lg p-4 overflow-auto bg-background flex items-center justify-center"
                     >
                         {file ? (
-                            <Button variant="outline" className="flex items-center gap-2">
+                            <Button variant="outline" className="flex items-center gap-2" onClick={handleOCR}>
                                 <ScanText className="w-4 h-4" />
                                 Scan Document
                             </Button>
@@ -169,6 +174,11 @@ export default function InfoMiner() {
                                 <ScanText className="w-4 h-4" />
                                 Scan Document
                             </Button>
+                        )}
+                        {ocrResult && (
+                            <div className="mt-4 p-3 border rounded">
+                                <pre className="whitespace-pre-wrap">{ocrResult}</pre>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -184,7 +194,8 @@ export default function InfoMiner() {
 
             <Separator />
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            {/* <form onSubmit={handleSubmit} className="space-y-3"> */}
+            <form className="space-y-3">
                 <KeyValueEditor
                     onChange={setPairs}
                 />
