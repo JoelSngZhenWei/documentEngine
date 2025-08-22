@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import dynamic from "next/dynamic"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Copy, File, ScanText, Upload, Lock, Check } from "lucide-react"
+import { CheckCircle, Copy, Upload, Check } from "lucide-react"
 import KeyValueEditor from "@/components/key-value-input"
 import { PdfControls } from "@/components/pdf-controls"
 import { ocrDocument } from "@/lib/doc-api"
@@ -13,8 +13,8 @@ import { useAuth } from "@/components/auth-provider"
 import AuthOverlay from "@/components/auth-overlay"
 import PreviousResults from "@/components/infominer-prev-results"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 
-// react-pdf must run client-side only
 const PdfPreview = dynamic(() => import("@/components/pdf-preview"), { ssr: false })
 
 type Pair = { field: string; info: string }
@@ -24,7 +24,9 @@ export default function InfoMiner() {
 
     const [copied, setCopied] = useState(false)
     const handleCopy = async () => {
-        await navigator.clipboard.writeText("PLACEHOLDER TEXT3")
+        await navigator.clipboard.writeText(
+            Array.isArray(ocrResult) ? ocrResult.join("\n\n") : ocrResult ?? ""
+        )
         setCopied(true)
         setTimeout(() => setCopied(false), 3000) // reset after 2s
     }
@@ -32,7 +34,8 @@ export default function InfoMiner() {
     const [file, setFile] = useState<File | null>(null)
     const [pageNumber, setPageNumber] = useState(1)
     const [numPages, setNumPages] = useState(0)
-
+    const MAX_SIZE_MB = 10
+    
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0]
         if (!f) return
@@ -41,8 +44,17 @@ export default function InfoMiner() {
             setFile(null)
             return
         }
+        if (f.size > MAX_SIZE_MB * 1024 * 1024) {
+            alert(`File must be smaller than ${MAX_SIZE_MB} MB`)
+            setFile(null)
+            return
+        }
         setFile(f)
-        setPageNumber(1) // reset when new file selected
+        setPageNumber(1)
+        toast("File uploaded successfully.", {
+            icon: <CheckCircle className="text-success" />,
+        })
+        handleOCR(f)
     }
 
     const prev = () => setPageNumber((p) => Math.max(1, p - 1))
@@ -62,20 +74,14 @@ export default function InfoMiner() {
             }, {} as Record<string, string | string[]>)
 
     const [ocrResult, setOcrResult] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
 
-    const handleOCR = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!file) {
-            return toast("Please submit and scan a document.", {
-                icon: <File className="text-warning" />,
-            })
-        }
-
+    const handleOCR = async (f: File) => {
+        setLoading(true)
         try {
-            const result = await ocrDocument(file)
-            console.log(result)
-            setOcrResult(result.content) // only store the text
-            toast("File uploaded successfully.", {
+            const result = await ocrDocument(f)
+            setOcrResult(result.text)
+            toast("File scanned successfully.", {
                 icon: <CheckCircle className="text-success" />,
             })
         } catch (err) {
@@ -83,6 +89,8 @@ export default function InfoMiner() {
             toast("Error uploading file: " + err, {
                 icon: <Upload className="text-danger" />,
             })
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -101,7 +109,7 @@ export default function InfoMiner() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-6">
                 {/* Left: Upload + PDF preview */}
-                <div className="space-y-3">
+                <div className="space-y-3 ">
                     <div className="flex items-center justify-between gap-4 h-16">
                         <span>Upload PDF</span>
 
@@ -116,7 +124,7 @@ export default function InfoMiner() {
                         </label>
                     </div>
 
-                    <div className="h-[40rem] border rounded-lg p-4 overflow-auto bg-background flex items-center justify-center">
+                    <div className="h-[30rem] border rounded-lg p-4 overflow-auto bg-background flex items-center justify-center">
                         {file ? (
                             <PdfPreview
                                 file={file}
@@ -162,23 +170,29 @@ export default function InfoMiner() {
                     <div
                         id="ocr-output"
                         aria-live="polite"
-                        className="h-[40rem] border rounded-lg p-4 overflow-auto bg-background flex items-center justify-center"
+                        className={`h-[30rem] border rounded-lg p-4 overflow-scroll bg-background ${!ocrResult ? "flex items-center justify-center" : ""}`}
+
                     >
-                        {file ? (
-                            <Button variant="outline" className="flex items-center gap-2" onClick={handleOCR}>
-                                <ScanText className="w-4 h-4" />
-                                Scan Document
-                            </Button>
-                        ) : (
-                            <Button variant="outline" disabled className="flex items-center gap-2">
-                                <ScanText className="w-4 h-4" />
-                                Scan Document
-                            </Button>
-                        )}
-                        {ocrResult && (
-                            <div className="mt-4 p-3 border rounded">
-                                <pre className="whitespace-pre-wrap">{ocrResult}</pre>
+                        {loading ? (
+                            <div className="w-full h-full space-y-3">
+                                <div className="text-center text-sm mb-2">
+                                    Scanning in progress...
+                                </div>
+                                <Skeleton className="h-6 w-3/4" />
+                                <Skeleton className="h-6 w-1/2" />
+                                <Skeleton className="h-6 w-full" />
+                                <Skeleton className="h-6 w-5/6" />
+                                <Skeleton className="h-6 w-2/3" />
+                                <Skeleton className="h-6 w-1/2" />
+                                <Skeleton className="h-6 w-5/6" />
+                                <Skeleton className="h-6 w-2/3" />
+                                <Skeleton className="h-6 w-5/6" />
+                                <Skeleton className="h-6 w-2/3" />
                             </div>
+                        ) : ocrResult ? (
+                            <pre className="whitespace-pre-wrap">{ocrResult[pageNumber - 1]}</pre>
+                        ) : (
+                            <div>Upload a document begin OCR scanning.</div>
                         )}
                     </div>
                 </div>
@@ -194,7 +208,6 @@ export default function InfoMiner() {
 
             <Separator />
 
-            {/* <form onSubmit={handleSubmit} className="space-y-3"> */}
             <form className="space-y-3">
                 <KeyValueEditor
                     onChange={setPairs}
