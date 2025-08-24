@@ -1,57 +1,114 @@
 "use client"
 
-import { useMemo } from "react"
-import { FileText } from "lucide-react"
+import { useEffect, useMemo, useRef } from "react"
+import { ChevronDown, ChevronUp, FileText, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 
-type Item = { id: string | number; datetime: string; name: string }
+type Item = { id: number; file: string; datetime: string } // datetime: "YYYY-MM-DD HH:mm"
 
 export default function PreviousResults({
   items,
   className,
+  height = "h-64",
 }: {
   items?: Item[]
   className?: string
+  height?: string
 }) {
   const data = useMemo<Item[]>(
     () =>
       items?.length
         ? items
         : [
-            // { id: 1, datetime: "2025-08-10T14:32:00Z", name: "Invoice_0810.pdf" },
-            // { id: 2, datetime: "2025-08-12T09:05:00Z", name: "Report_Q2.pdf" },
-            // { id: 3, datetime: "2025-08-15T18:45:00Z", name: "Contract_Acme.pdf" },
-            // { id: 4, datetime: "2025-08-18T11:20:00Z", name: "Shipping_Manifest.pdf" },
-          ],
+          { id: 1, file: "resume_extraction_result.json", datetime: "2025-08-24 15:26" },
+          { id: 2, file: "invoice_12345_output.json", datetime: "2025-08-23 10:12" },
+          { id: 3, file: "hdb_contract_summary.json", datetime: "2025-08-21 09:41" },
+          { id: 4, file: "insurance_slip_april.pdf.json", datetime: "2025-08-20 18:05" },
+          { id: 5, file: "ocr_test_document.json", datetime: "2025-08-19 14:33" },
+          { id: 6, file: "hdb_contract_summary.json", datetime: "2025-08-18 09:41" },
+          { id: 7, file: "insurance_slip_april.pdf.json", datetime: "2025-08-17 18:05" },
+          { id: 8, file: "ocr_test_document.json", datetime: "2025-08-15 14:33" },
+        ],
     [items]
   )
 
-  return (
-    <div className={cn("space-y-3", className)}>
-      <div className="text-sm font-medium">Previous Results</div>
+  // latest first (top), earliest last (bottom)
+  const sorted = useMemo(
+    () =>
+      [...data].sort(
+        (a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()
+      ),
+    [data]
+  )
 
-      <div className="space-y-2">
-        {data.map((item) => {
-          const formatted = new Date(item.datetime).toLocaleString()
-          return (
+  // Grab the Radix viewport inside ScrollArea
+  const containerRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (containerRef.current) {
+      viewportRef.current = containerRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      ) as HTMLDivElement | null
+    }
+  }, [])
+
+  const scrollToTop = () => {
+    viewportRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+  }
+  const scrollToBottom = () => {
+    if (!viewportRef.current) return
+    viewportRef.current.scrollTo({
+      top: viewportRef.current.scrollHeight,
+      behavior: "smooth",
+    })
+  }
+
+  return (
+    <div className={cn("space-y-2", className)} ref={containerRef}>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={scrollToTop}>
+          <ChevronUp className="mr-2 h-4 w-4" />
+          Latest
+        </Button>
+        <Button size="sm" variant="outline" onClick={scrollToBottom}>
+          <ChevronDown className="mr-2 h-4 w-4" />
+          Earliest
+        </Button>
+        <Button
+          size="sm"
+          variant={"outline"}
+          onClick={() => {
+            console.log("Clear results")
+          }}
+        >
+          <XCircle className="mr-2 h-4 w-4 text-warning" />
+          Clear History
+        </Button>
+      </div>
+      <ScrollArea className={cn(height)}>
+        <div className="space-y-3">
+          {sorted.map((item) => (
             <Button
               key={item.id}
               variant="outline"
               className={cn(
-                "w-full h-full justify-start rounded-lg px-3 py-2",
+                "w-full justify-start rounded-lg px-3 py-2",
                 "bg-card/40 hover:bg-card/60 transition-colors flex items-center gap-5"
               )}
             >
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1 text-left space-y-1">
-                <div className="text-sm truncate">{item.name}</div>
-                <div className="text-xs text-muted-foreground">{formatted}</div>
+                <p className="truncate text-sm font-medium">{item.file}</p>
+                <p className="text-xs text-muted-foreground">{item.datetime}</p>
               </div>
             </Button>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+        <ScrollBar orientation="vertical" />
+      </ScrollArea>
     </div>
   )
 }

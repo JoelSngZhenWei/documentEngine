@@ -15,7 +15,7 @@ export default function AppMenuBar() {
     const logout = useLogout()
 
     return (
-        <Menubar className="w-full flex justify-between px-5 border-muted-foreground ">
+        <Menubar className="w-full flex justify-between px-5 py-5 border-muted-foreground sticky top-0 z-50 bg-background">
             {/* Left side: Sidebar Trigger */}
             <div className="flex items-center">
                 <SidebarTrigger />

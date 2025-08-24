@@ -14,6 +14,8 @@ import AuthOverlay from "@/components/auth-overlay"
 import PreviousResults from "@/components/infominer-prev-results"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import KeyValueResults from "@/components/key-value-results"
+import KeyValueResultsPlaceholder from "@/components/key-value-results-placeholder"
 
 const PdfPreview = dynamic(() => import("@/components/pdf-preview"), { ssr: false })
 
@@ -33,7 +35,7 @@ export default function InfoMiner() {
     const [pageNumber, setPageNumber] = useState(1)
     const [numPages, setNumPages] = useState(0)
     const MAX_SIZE_MB = 10
-    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0]
         if (!f) return
@@ -79,10 +81,33 @@ export default function InfoMiner() {
         }
     }
 
-    const [pairs, setPairs] = useState<Pair[]>([]);    
+    const [pairs, setPairs] = useState<Pair[]>([]);
+    type ExtractionResult = {
+        status: string
+        extracted_info?: Record<string, string>
+    }
+    const [extractionResult, setExtractionResult] = useState<ExtractionResult | null>(null)
+    const [extractLoading, setExtractLoading] = useState(false)
     const handleExtraction = async () => {
-        await extractDocumentInfo(undefined, pairs); // uses localStorage jobId
-      };
+        setExtractLoading(true)
+        setExtractionResult({ status: "processing", extracted_info: {} }) // clear UI now
+        try {
+            const result = await extractDocumentInfo(undefined, pairs)
+            setExtractionResult(result)
+            console.log(result)
+            toast("Information extracted successfully.", {
+                icon: <CheckCircle className="text-success" />,
+            })
+        } catch (err) {
+            const msg = "Error extracting information. "
+            console.log(msg + err)
+            toast(msg + err, {
+                icon: <Upload className="text-danger" />,
+            })
+        } finally {
+            setExtractLoading(false)
+        }
+    };
 
     return (
         <div className="w-full px-4 py-8 space-y-3">
@@ -198,18 +223,49 @@ export default function InfoMiner() {
 
             <Separator />
 
-                <KeyValueEditor
-                    onChange={setPairs}
-                />
+            <KeyValueEditor
+                onChange={setPairs}
+            />
 
+            {ocrResult ? (
                 <Button variant={"outline"} type="submit" onClick={handleExtraction}>
                     <Check className="w-4 h-4" />
                     Submit Extraction Request
                 </Button>
+            ) : (
+                <Button variant={"outline"} type="submit" disabled onClick={handleExtraction}>
+                    <Check className="w-4 h-4" />
+                    Submit Extraction Request
+                </Button>
+            )}
 
             <Separator />
 
-            <PreviousResults />
+            {extractLoading ? (
+                <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Extraction Results</p>
+                    <KeyValueResultsPlaceholder count={pairs.length || 3} />
+                    <Separator />
+                </div>
+            ) : (
+                extractionResult &&
+                extractionResult.status === "done" && (
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Extraction Results</p>
+                        <KeyValueResults
+                            key={JSON.stringify(extractionResult.extracted_info ?? {})}
+                            results={extractionResult.extracted_info ?? {}}
+                        />
+                        <Separator />
+                    </div>
+                )
+            )}
+
+
+            <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Previous Results</p>
+                <PreviousResults maxVisible={5}/>
+            </div>
 
             {!user && <AuthOverlay message="Please log in with a guest account to continue. This is a security measure against spam." />}
 
