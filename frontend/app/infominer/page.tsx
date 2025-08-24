@@ -1,13 +1,13 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Copy, Upload, Check } from "lucide-react"
 import KeyValueEditor from "@/components/key-value-input"
 import { PdfControls } from "@/components/pdf-controls"
-import { ocrDocument } from "@/lib/doc-api"
+import { extractDocumentInfo, ocrDocument, Pair } from "@/lib/doc-api"
 import { toast } from "sonner"
 import { useAuth } from "@/components/auth-provider"
 import AuthOverlay from "@/components/auth-overlay"
@@ -16,8 +16,6 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const PdfPreview = dynamic(() => import("@/components/pdf-preview"), { ssr: false })
-
-type Pair = { field: string; info: string }
 
 export default function InfoMiner() {
     const { user } = useAuth()
@@ -60,19 +58,6 @@ export default function InfoMiner() {
     const prev = () => setPageNumber((p) => Math.max(1, p - 1))
     const next = () => setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p))
 
-    const [pairs, setPairs] = useState<Pair[]>([])
-
-    // Optional: turn pairs into a key→value object (handles duplicate keys)
-    const pairsToObject = (rows: Pair[]) =>
-        rows
-            .filter(p => p.field.trim()) // ignore empty keys
-            .reduce((acc, { field, info }) => {
-                const key = field.trim()
-                if (acc[key] === undefined) acc[key] = info
-                else acc[key] = Array.isArray(acc[key]) ? [...acc[key], info] : [acc[key] as string, info]
-                return acc
-            }, {} as Record<string, string | string[]>)
-
     const [ocrResult, setOcrResult] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -93,6 +78,11 @@ export default function InfoMiner() {
             setLoading(false)
         }
     }
+
+    const [pairs, setPairs] = useState<Pair[]>([]);    
+    const handleExtraction = async () => {
+        await extractDocumentInfo(undefined, pairs); // uses localStorage jobId
+      };
 
     return (
         <div className="w-full px-4 py-8 space-y-3">
@@ -208,16 +198,14 @@ export default function InfoMiner() {
 
             <Separator />
 
-            <form className="space-y-3">
                 <KeyValueEditor
                     onChange={setPairs}
                 />
 
-                <Button variant={"outline"} type="submit">
+                <Button variant={"outline"} type="submit" onClick={handleExtraction}>
                     <Check className="w-4 h-4" />
                     Submit Extraction Request
                 </Button>
-            </form>
 
             <Separator />
 
