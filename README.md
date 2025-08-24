@@ -16,11 +16,15 @@ Built with:
 ## 🚀 Getting Started
 
 ### 1. Environment Variables
-This project uses **three separate env configs**:  
+This project uses a **single root `.env` file** that is shared across services (frontend, backend, ocrService).  
 
-#### Frontend (`frontend/.env`)
+#### Root `.env`
 ```env
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+# Shared Backend URL
+BACKEND_URL=http://backend:8080
+
+# ===== Frontend =====
+NEXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
 
 NEXT_PUBLIC_BACKEND_LOGIN=/api/auth/signin
 NEXT_PUBLIC_BACKEND_SIGNUP=/api/auth/signup
@@ -29,27 +33,31 @@ NEXT_PUBLIC_BACKEND_ME=/api/session/me
 
 NEXT_PUBLIC_BACKEND_OCR=/api/ocr/upload
 NEXT_PUBLIC_BACKEND_STATUS=/api/ocr/status
-
 NEXT_PUBLIC_BACKEND_EXTRACTION=/api/extraction/extract
 NEXT_PUBLIC_BACKEND_STATUS_EXTRACTION=/api/extraction/status
+
+# ===== OCR Service =====
+GOOGLE_API_KEY=your_google_api_key_here
+SPRING_CALLBACK_URL_OCR=${BACKEND_URL}/api/ocr/processed
+SPRING_CALLBACK_URL_EXTRACT=${BACKEND_URL}/api/extraction/processed
+
+# ===== Backend (Spring Boot) =====
+SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/testdb
+SPRING_DATASOURCE_USERNAME=joelsng
+SPRING_DATASOURCE_PASSWORD=password
+
+JWT_SECRET=supersecretkey
+JWT_EXPIRATION_MS=86400000
 ````
 
-#### OCR Service (`ocrService/.env`)
-
-```env
-GOOGLE_API_KEY=your_google_api_key_here
-SPRING_CALLBACK_URL_OCR=http://backend:8080/api/ocr/processed
-SPRING_CALLBACK_URL_EXTRACT=http://backend:8080/api/extraction/processed
-```
-
-#### Backend (`backend/src/main/resources/application.properties`)
+#### Backend Config (`backend/src/main/resources/application.properties`)
 
 ```properties
 spring.application.name=backend
 
-spring.datasource.url=jdbc:postgresql://postgres:5432/testdb
-spring.datasource.username=joelsng
-spring.datasource.password=password
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.hibernate.ddl-auto=update
@@ -58,8 +66,8 @@ spring.jpa.properties.hibernate.format_sql=true
 spring.data.redis.host=redis
 spring.data.redis.port=6379
 
-backend.app.jwtSecret========================JoelSng=Spring===========================
-backend.app.jwtExpirationMs=86400000
+backend.app.jwtSecret=${JWT_SECRET}
+backend.app.jwtExpirationMs=${JWT_EXPIRATION_MS}
 
 ocrservice.ocr.url=http://ocr-service:8000/document
 ocrservice.extract.url=http://ocr-service:8000/extract
@@ -99,10 +107,13 @@ This will start:
 
 ## 🛠 Development Notes
 
-* **Frontend** communicates with backend using relative API paths defined in `.env`.
-* **Backend** talks to **OCR Service** inside the Docker network (`http://ocr-service:8000/...`).
-* **OCR Service** calls back into backend at the URLs defined in `SPRING_CALLBACK_URL_OCR` and `SPRING_CALLBACK_URL_EXTRACT`.
-* PostgreSQL & Redis are networked services in the same Docker Compose stack.
+* The **root `.env`** is loaded by Docker Compose and injected into each service.
+* **Frontend** uses `NEXT_PUBLIC_` vars for API calls.
+* **Backend** pulls DB/Redis/JWT settings from env and talks to OCR service inside the Docker network (`http://ocr-service:8000/...`).
+* **OCR Service** calls back into backend using the callback URLs from env.
+* PostgreSQL & Redis run as part of the Docker network and are accessible only to backend.
+
+---
 
 ## 📄 License
 

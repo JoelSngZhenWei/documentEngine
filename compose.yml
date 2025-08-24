@@ -26,6 +26,14 @@ services:
 
   # frontend:
   #   build: ./frontend
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+  #     - NEXT_PUBLIC_BACKEND_OCR=${NEXT_PUBLIC_BACKEND_OCR}
+  #     - NEXT_PUBLIC_BACKEND_STATUS=${NEXT_PUBLIC_BACKEND_STATUS}
+  #     - NEXT_PUBLIC_BACKEND_EXTRACTION=${NEXT_PUBLIC_BACKEND_EXTRACTION}
+  #     - NEXT_PUBLIC_BACKEND_STATUS_EXTRACTION=${NEXT_PUBLIC_BACKEND_STATUS_EXTRACTION}
   #   depends_on:
   #     - "backend"
   #   ports:
@@ -34,7 +42,11 @@ services:
   ocr-service:
     build: ./ocrService
     env_file:
-      - ./ocrService/.env
+      - .env
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SPRING_CALLBACK_URL_OCR=${SPRING_CALLBACK_URL_OCR}
+      - SPRING_CALLBACK_URL_EXTRACT=${SPRING_CALLBACK_URL_EXTRACT}
     ports:
     - "8000:8000"
     restart: unless-stopped
