@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Copy, Upload, Check } from "lucide-react"
+import { CheckCircle, Copy, Upload, Check, Info } from "lucide-react"
 import KeyValueEditor from "@/components/key-value-input"
 import { PdfControls } from "@/components/pdf-controls"
 import { extractDocumentInfo, ocrDocument, Pair } from "@/lib/doc-api"
@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import KeyValueResults from "@/components/key-value-results"
 import KeyValueResultsPlaceholder from "@/components/key-value-results-placeholder"
+import { TutorialButton } from "@/components/tutorial"
 
 const PdfPreview = dynamic(() => import("@/components/pdf-preview"), { ssr: false })
 
@@ -111,7 +112,10 @@ export default function InfoMiner() {
 
     return (
         <div className="w-full px-4 py-8 space-y-3">
-            <h1 className="text-2xl font-bold mb-6">Document Miner – PDF Upload & OCR Preview</h1>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold">Info Miner – PDF Upload & OCR Preview</h1>
+                <TutorialButton />
+            </div>
 
             {/* Single hidden input shared by both upload buttons */}
             <Input
@@ -243,7 +247,6 @@ export default function InfoMiner() {
 
             {extractLoading ? (
                 <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">Extraction Results</p>
                     <KeyValueResultsPlaceholder count={pairs.length || 3} />
                     <Separator />
                 </div>
@@ -251,7 +254,6 @@ export default function InfoMiner() {
                 extractionResult &&
                 extractionResult.status === "done" && (
                     <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Extraction Results</p>
                         <KeyValueResults
                             key={JSON.stringify(extractionResult.extracted_info ?? {})}
                             results={extractionResult.extracted_info ?? {}}
@@ -261,11 +263,7 @@ export default function InfoMiner() {
                 )
             )}
 
-
-            <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Previous Results</p>
-                <PreviousResults maxVisible={5}/>
-            </div>
+            <PreviousResults />
 
             {!user && <AuthOverlay message="Please log in with a guest account to continue. This is a security measure against spam." />}
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef } from "react"
-import { ChevronDown, ChevronUp, FileText, XCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, FileIcon, FileText, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
@@ -30,6 +30,9 @@ export default function PreviousResults({
           { id: 6, file: "hdb_contract_summary.json", datetime: "2025-08-18 09:41" },
           { id: 7, file: "insurance_slip_april.pdf.json", datetime: "2025-08-17 18:05" },
           { id: 8, file: "ocr_test_document.json", datetime: "2025-08-15 14:33" },
+          { id: 9, file: "hdb_contract_summary.json", datetime: "2025-08-18 09:41" },
+          { id: 10, file: "insurance_slip_april.pdf.json", datetime: "2025-08-17 18:05" },
+          { id: 11, file: "ocr_test_document.json", datetime: "2025-08-15 14:33" },
         ],
     [items]
   )
@@ -68,27 +71,33 @@ export default function PreviousResults({
 
   return (
     <div className={cn("space-y-2", className)} ref={containerRef}>
-      <div className="flex gap-2">
-        <Button size="sm" variant="outline" onClick={scrollToTop}>
-          <ChevronUp className="mr-2 h-4 w-4" />
-          Latest
-        </Button>
-        <Button size="sm" variant="outline" onClick={scrollToBottom}>
-          <ChevronDown className="mr-2 h-4 w-4" />
-          Earliest
-        </Button>
-        <Button
-          size="sm"
-          variant={"outline"}
-          onClick={() => {
-            console.log("Clear results")
-          }}
-        >
-          <XCircle className="mr-2 h-4 w-4 text-warning" />
-          Clear History
-        </Button>
+      {/* Title + buttons in one row */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-muted-foreground">
+          Previous Results
+        </p>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={scrollToTop}>
+            <ChevronUp className="mr-2 h-4 w-4" />
+            Latest
+          </Button>
+          <Button size="sm" variant="outline" onClick={scrollToBottom}>
+            <ChevronDown className="mr-2 h-4 w-4" />
+            Earliest
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              console.log("Clear results")
+            }}
+          >
+            <XCircle className="mr-2 h-4 w-4 text-warning" />
+            Clear History
+          </Button>
+        </div>
       </div>
-      <ScrollArea className={cn(height)}>
+      <ScrollArea className="h-[25rem]">
         <div className="space-y-3">
           {sorted.map((item) => (
             <Button

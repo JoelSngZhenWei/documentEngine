@@ -7,11 +7,12 @@ import {
     SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
     SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator,
 } from "@/components/ui/sidebar"
-import { FileText, Home, ScanText, User2 } from "lucide-react";
+import { FileText, Home, LogOut, ScanText, User2 } from "lucide-react";
 import { useRouter } from "next/navigation"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useAuth } from "./auth-provider";
 import { useLogout } from "@/lib/user-api";
+import { toast } from "sonner";
 
 export function AppSidebar() {
     const router = useRouter()
@@ -76,7 +77,14 @@ export function AppSidebar() {
                                     className="w-[--radix-popper-anchor-width]"
                                 >
 
-                                    <DropdownMenuItem onClick={logout}>
+                                    <DropdownMenuItem
+                                        onClick={async () => {
+                                            await logout()
+                                            toast("Signed out successfully", {
+                                                icon: <LogOut className="text-muted-foreground" />,
+                                            })
+                                        }}
+                                    >
                                         <span>Sign out</span>
                                     </DropdownMenuItem>
 

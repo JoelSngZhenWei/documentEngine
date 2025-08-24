@@ -8,11 +8,14 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "./auth-provider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useLogout } from "@/lib/user-api";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AppMenuBar() {
     const router = useRouter()
     const { user } = useAuth()
     const logout = useLogout()
+
 
     return (
         <Menubar className="w-full flex justify-between px-5 py-5 border-muted-foreground sticky top-0 z-50 bg-background">
@@ -48,7 +51,14 @@ export default function AppMenuBar() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
 
-                            <DropdownMenuItem onClick={logout}>
+                            <DropdownMenuItem
+                                onClick={async () => {
+                                    await logout()
+                                    toast("Signed out successfully", {
+                                        icon: <LogOut className="text-muted-foreground" />,
+                                    })
+                                }}
+                            >
                                 <span>Sign out</span>
                             </DropdownMenuItem>
 
