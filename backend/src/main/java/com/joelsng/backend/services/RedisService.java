@@ -84,4 +84,38 @@ public class RedisService {
         }
         return result;
     }
+
+
+    // Extraction Jobs
+    public void setExtractionProcessing(String jobId) {
+        redisTemplate.opsForValue().set(
+                "extract:job:" + jobId,
+                "{\"status\":\"processing\"}",
+                10, TimeUnit.MINUTES
+        );
+    }
+
+    public void setExtractionResult(String jobId, Map<String, Object> extractedInfo) {
+        try {
+            if (extractedInfo == null) extractedInfo = Map.of();
+            String json = objectMapper.writeValueAsString(
+                    Map.of("status", "done", "extracted_info", extractedInfo)
+            );
+            redisTemplate.opsForValue().set(
+                    "extract:job:" + jobId,
+                    json,
+                    1, TimeUnit.HOURS
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getExtractionStatus(String jobId) {
+        String result = redisTemplate.opsForValue().get("extract:job:" + jobId);
+        if (result == null) {
+            return "{\"status\":\"not_found\"}";
+        }
+        return result;
+    }
 }

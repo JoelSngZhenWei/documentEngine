@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@PermitAll
-@RequestMapping("api/documents/")
+@RequestMapping("api/ocr/")
 public class OCRController {
     private final RestTemplate restTemplate = new RestTemplate();
 

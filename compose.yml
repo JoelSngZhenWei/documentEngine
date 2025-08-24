@@ -33,6 +33,8 @@ services:
 
   ocr-service:
     build: ./ocrService
+    env_file:
+      - ./ocrService/.env
     ports:
     - "8000:8000"
     restart: unless-stopped

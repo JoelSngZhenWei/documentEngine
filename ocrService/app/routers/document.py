@@ -19,25 +19,26 @@ def read_document(file: UploadFile = File(...), jobId: str = Form(...)):
         text_list = read_pdf_markdown(tmp.name)
         
     payload = {"jobId": jobId, "text": text_list}
-    callback_url = os.getenv("SPRING_CALLBACK_URL", "http://backend:8080/api/documents/processed")
+    callback_url = os.getenv("SPRING_CALLBACK_URL_OCR", "http://backend:8080/api/ocr/processed")
     requests.post(callback_url, json = payload)
     return {"status":"received", "jobId":jobId}
 
 @router.post("/extract")
 def extract_information(req: ExtractRequest):
-    pdf_text = read_pdf_markdown(req.pdf_path)
-    AnswerModel = dynamic_answer_model(req.field_descriptions)
-
+    AnswerModel = dynamic_answer_model(req.fields)
     try:
         llm = get_llm()
     except LLMNotConfigured as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     structured_llm = llm.with_structured_output(schema=AnswerModel)
-    prompt = EXTRACTION_PROMPT.invoke({"text": pdf_text})
+    prompt = EXTRACTION_PROMPT.invoke({"text": "\n".join(req.text)})
     response = structured_llm.invoke(prompt)
-    output = {
-        "extracted_text": pdf_text,
+    payload = {
+        "jobId": req.jobId,
         "extracted_info": response.model_dump()
     }
-    return output
+    print(payload)
+    callback_url = os.getenv("SPRING_CALLBACK_URL_EXTRACT", "http://backend:8080/api/extraction/processed")
+    requests.post(callback_url, json=payload)
+    return {"status":"extracted", "jobId":req.jobId}

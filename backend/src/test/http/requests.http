@@ -35,3 +35,23 @@ Content-Type: application/pdf
 
 < ./test.pdf
 --WebAppBoundary--
+
+### Test /extract (IntelliJ HTTP Client)
+POST http://localhost:8000/extract
+Content-Type: application/json
+
+{
+  "jobId": "job-123",
+  "text": ["Page 1 text. Joel's Age is 24. He is extremely cunning.", "Page 2 text. Joel's hair colour is red."],
+  "fields": { "Age": "", "Species": "", "Type": "How cunning is Joel?" }
+}
+
+### Test /extract (IntelliJ HTTP Client)
+POST http://localhost:8080/api/extraction/extract
+Content-Type: application/json
+
+{
+  "jobId": "job-123",
+  "text": ["Page 1 text. Joel's Age is 24. He is extremely cunning.", "Page 2 text. Joel's hair colour is red."],
+  "fields": { "Age": "", "Species": "", "Type": "How cunning is Joel?" }
+}

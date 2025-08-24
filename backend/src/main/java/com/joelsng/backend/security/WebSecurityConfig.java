@@ -64,7 +64,8 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth ->
                         auth
                                 .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/documents/processed").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/ocr/processed").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/extraction/processed").permitAll()
                                 .anyRequest().authenticated()
                 );
         http.authenticationProvider(authenticationProvider());
