@@ -1,27 +1,29 @@
 package com.joelsng.backend.controllers;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.joelsng.backend.models.OcrJob;
+import com.joelsng.backend.repository.OcrJobRepository;
 import com.joelsng.backend.services.RedisService;
 import com.joelsng.backend.utils.MultipartInputStreamFileResource;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @PermitAll
 @RequestMapping("api/documents/")
-public class DocumentController {
+public class OCRController {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${ocrservice.ocr.url}")
@@ -30,6 +32,9 @@ public class DocumentController {
     @Autowired
     private RedisService redisService;
 
+    @Autowired
+    private OcrJobRepository ocrJobRepository;
+
     @PostMapping(
             path = "/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -37,28 +42,56 @@ public class DocumentController {
     )
     public ResponseEntity<?> uploadDocument(@RequestPart("file") MultipartFile file) {
         try {
+            String jobId = UUID.randomUUID().toString();
+            redisService.setOcrProcessing(jobId);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("file", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
+            body.add("jobId", jobId);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            ResponseEntity<List<String>> response =
-                    restTemplate.exchange(
-                            ocrServiceOcrUrl,
-                            HttpMethod.POST,
-                            requestEntity,
-                            new ParameterizedTypeReference<List<String>>() {}
-                    );
-//                    restTemplate.postForEntity(ocrServiceOcrUrl, requestEntity, List.class);
+            restTemplate.postForEntity(ocrServiceOcrUrl, requestEntity, Void.class);
 
-            return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
-
+            return ResponseEntity.ok(Map.of("jobId", jobId));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/processed")
+    public ResponseEntity<?> ocrProcessed(@RequestBody Map<String, Object> payload) {
+        String jobId = (String) payload.get("jobId");
+
+        @SuppressWarnings("unchecked")
+        List<String> text = (List<String>) payload.get("text");
+
+        redisService.setOcrResult(jobId, text);
+
+        OcrJob job = new OcrJob();
+        job.setJobId(jobId);
+        job.setStatus((String) payload.get("status"));
+        job.setText(text);
+        ocrJobRepository.save(job);
+        System.out.println("Saved OCR job " + jobId + " into db");
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/status/{jobId}")
+    public ResponseEntity<?> status(@PathVariable String jobId) {
+        try {
+            String json = redisService.getOcrStatus(jobId);
+            Map<String, Object> response = new ObjectMapper().readValue(
+                    json, new TypeReference<Map<String, Object>>() {}
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to parse status"));
         }
     }
 

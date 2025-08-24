@@ -10,22 +10,19 @@ Content-Type: application/json
 ###
 GET http://localhost:8080/api/test/admin
 
-###
-POST http://localhost:8080/api/ocr/upload
-Content-Type: multipart/form-data
-Cookie: token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3NTU3MTIwNTYsImV4cCI6MTc1NTc5ODQ1Nn0.fD-7zU6eYawFe41B8cFGiSNkxcsV4_7gcGdx7eS45fA
-
-< ./test.pdf
-
 ### Upload PDF to FastAPI
 POST http://localhost:8000/document
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 
 --WebAppBoundary
-Content-Disposition: form-data; name="file"; filename="document_long.pdf"
+Content-Disposition: form-data; name="file"; filename="test.pdf"
 Content-Type: application/pdf
 
-< ./document_long.pdf
+< ./test.pdf
+--WebAppBoundary
+Content-Disposition: form-data; name="jobId"
+
+test-123
 --WebAppBoundary--
 
 ### Upload PDF to Spring to FastAPI

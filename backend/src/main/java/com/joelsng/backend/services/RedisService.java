@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -21,6 +23,8 @@ public class RedisService {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
+
+    // Session Management
 
     public void saveSession(JwtResponse jwtResponse) {
         try {
@@ -56,4 +60,28 @@ public class RedisService {
         }
     }
 
+    // OCR Jobs
+    public void setOcrProcessing(String jobId) {
+        redisTemplate.opsForValue().set("ocr:job:" + jobId, "{\"status\":\"processing\"}", 10, TimeUnit.MINUTES);
+    }
+
+    public void setOcrResult(String jobId, List<String> text) {
+        try {
+            String json = objectMapper.writeValueAsString(
+                    Map.of("status", "done", "text", text)
+            );
+            redisTemplate.opsForValue().set("ocr:job:" + jobId, json, 1, TimeUnit.HOURS);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getOcrStatus(String jobId) {
+        String result = redisTemplate.opsForValue().get("ocr:job:" + jobId);
+        if (result == null) {
+            return "{\"status\":\"not_found\"}";
+        }
+        return result;
+    }
 }
