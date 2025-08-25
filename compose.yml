@@ -53,6 +53,8 @@ services:
 
   backend:
     build: ./backend
+    volumes:
+      - ./ocr_upload:/ocr_upload
     depends_on:
       db:
         condition: service_started

@@ -1,7 +1,5 @@
 import { useAuth } from "@/components/auth-provider"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { LogOut } from "lucide-react"
 
 export async function fetchMe() {
   const res = await fetch(

@@ -11,14 +11,19 @@ from app.config.prompts import EXTRACTION_PROMPT
 router = APIRouter()
 
 @router.post("/document")
-def read_document(file: UploadFile = File(...), jobId: str = Form(...)):
+def read_document(file: UploadFile = File(...), jobId: str = Form(...), fileName: str = Form(None), filePath: str = Form(None)):
     contents = file.file.read()
     with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
         tmp.write(contents)
         tmp.flush()
         text_list = read_pdf_markdown(tmp.name)
         
-    payload = {"jobId": jobId, "text": text_list}
+    payload = {
+        "jobId": jobId, 
+        "text": text_list, 
+        "fileName": fileName,
+        "filePath": filePath
+        }
     callback_url = os.getenv("SPRING_CALLBACK_URL_OCR", "http://backend:8080/api/ocr/processed")
     requests.post(callback_url, json = payload)
     return {"status":"received", "jobId":jobId}

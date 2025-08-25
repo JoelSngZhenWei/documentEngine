@@ -1,4 +1,6 @@
-// OCR Document Path
+
+// -------------------------------------- OCR Document Path --------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------
 export async function ocrDocument(file: File) {
   const formData = new FormData()
   formData.append("file", file)
@@ -42,7 +44,73 @@ export async function ocrDocument(file: File) {
   }
 }
 
-// Extracting Document Info Path
+export async function ocrHistory() {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+  const historyPath = process.env.NEXT_PUBLIC_BACKEND_EXTRACTION ?? "/api/ocr/history";
+
+  const historyURL = new URL(historyPath, base).toString();
+
+  const historyRes = await fetch(
+    historyURL,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
+  if (!historyRes.ok) {
+    const msg = await historyRes.text().catch(() => "");
+    throw new Error(`History extractionfailed: ${historyRes.status} ${msg}`)
+  };
+
+  const data = await historyRes.json();
+  console.log(data)
+  return data;
+
+}
+
+export async function ocrFetchFile(jobId: string, fileName: string): Promise<File> {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+  const filePath = `/api/ocr/file/${jobId}`;
+  const fileURL = new URL(filePath, base).toString();
+
+  const res = await fetch(fileURL, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(`File fetch failed: ${res.status} ${msg}`);
+  }
+
+  const blob = await res.blob();
+  return new File([blob], fileName || `ocr_${jobId}.pdf`, { type: blob.type });
+}
+
+export async function ocrClearHistory() {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+  const clearPath = "/api/ocr/history/clear";
+
+  const clearURL = new URL(clearPath, base).toString();
+
+  const res = await fetch(clearURL, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(`Clear history failed: ${res.status} ${msg}`);
+  }
+
+  const data = await res.json();
+  console.log(data);
+  return data;
+}
+
+
+// -------------------------------------- Extracting Document Info Path --------------------------------------
+// -----------------------------------------------------------------------------------------------------------
 export type Pair = { field: string; info: string };
 
 export const pairsToObject = (rows: Pair[]) =>

@@ -22,7 +22,7 @@ const formSchema = z.object({
 
 export default function FormLogIn() {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-    const [show, setShow] = useState(false) // <-- move hook to top-level (no hooks inside render callbacks)
+    const [show, setShow] = useState(false)
     const router = useRouter()
     const { setUser } = useAuth()
 

@@ -4,10 +4,10 @@ import React, { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Copy, Upload, Check, Info } from "lucide-react"
+import { CheckCircle, Copy, Upload, Check } from "lucide-react"
 import KeyValueEditor from "@/components/key-value-input"
 import { PdfControls } from "@/components/pdf-controls"
-import { extractDocumentInfo, ocrDocument, Pair } from "@/lib/doc-api"
+import { extractDocumentInfo, ocrClearHistory, ocrDocument, ocrFetchFile, ocrHistory, Pair } from "@/lib/doc-api"
 import { toast } from "sonner"
 import { useAuth } from "@/components/auth-provider"
 import AuthOverlay from "@/components/auth-overlay"
@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import KeyValueResults from "@/components/key-value-results"
 import KeyValueResultsPlaceholder from "@/components/key-value-results-placeholder"
 import { TutorialButton } from "@/components/tutorial"
+import { type } from "os"
 
 const PdfPreview = dynamic(() => import("@/components/pdf-preview"), { ssr: false })
 
@@ -110,6 +111,30 @@ export default function InfoMiner() {
         }
     };
 
+    const handleSelectHistory = async (item: any) => {
+        try {
+            const file = await ocrFetchFile(item.jobId, item.fileName);
+            setFile(file);
+            setOcrResult(item.text);
+            setPageNumber(1);
+        } catch (err) {
+            console.error("Failed to fetch file:", err);
+        }
+    };
+
+    const [history, setHistory] = useState<any[]>([])
+
+    useEffect(() => {
+        ocrHistory()
+            .then(data => {
+                setHistory(data)
+                toast("Database refreshed")
+            })
+            .catch(err => {
+                console.error("Failed to fetch history:", err)
+            })
+    }, [])
+
     return (
         <div className="w-full px-4 py-8 space-y-3">
             <div className="flex items-center justify-between mb-6">
@@ -134,7 +159,7 @@ export default function InfoMiner() {
 
                         {/* Top-right trigger for file input */}
                         <label htmlFor="document">
-                            <Button asChild variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
+                            <Button asChild variant="outline" className="flex items-center gap-2 cursor-pointer">
                                 <span>
                                     <Upload className="w-4 h-4 mr-2" />
                                     Upload
@@ -171,7 +196,7 @@ export default function InfoMiner() {
                 <div className="space-y-3">
                     <div className="flex items-center justify-between gap-4 h-16">
                         <span>OCR Output</span>
-                        <Button variant="outline" size="sm" onClick={handleCopy}>
+                        <Button variant="outline" onClick={handleCopy}>
                             {copied ? (
                                 <>
                                     <Check className="mr-2 text-success" />
@@ -263,7 +288,29 @@ export default function InfoMiner() {
                 )
             )}
 
-            <PreviousResults />
+            <PreviousResults
+                results={history}
+                onRefresh={() => {
+                    ocrHistory().then(data => {
+                        setHistory(data)
+                        toast("Database refreshed")
+                    })
+                }}
+
+                onSelect={handleSelectHistory}
+
+                onClear={() => {
+                    ocrClearHistory()
+                        .then(() => {
+                            setHistory([])
+                            toast("History cleared successfully")
+                        })
+                        .catch((err) => {
+                            console.error("Failed to clear history:", err)
+                            toast("Failed to clear history")
+                        })
+                }}
+            />
 
             {!user && <AuthOverlay message="Please log in with a guest account to continue. This is a security measure against spam." />}
 

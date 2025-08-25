@@ -55,3 +55,6 @@ Content-Type: application/json
   "text": ["Page 1 text. Joel's Age is 24. He is extremely cunning.", "Page 2 text. Joel's hair colour is red."],
   "fields": { "Age": "", "Species": "", "Type": "How cunning is Joel?" }
 }
+
+###
+GET http://localhost:8080/api/ocr/history
